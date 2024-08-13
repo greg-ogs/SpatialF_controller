@@ -1,12 +1,10 @@
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   pinMode(0, OUTPUT);
   pinMode(1, INPUT);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   int sa = Serial.available();
 //   if(sa > 0){
 //     String incoming_data = Serial.readString();
