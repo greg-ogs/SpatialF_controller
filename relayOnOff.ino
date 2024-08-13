@@ -8,13 +8,13 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   int sa = Serial.available();
-  if(sa > 0){
-    String incoming_data = Serial.readString();
-    Serial.print("Serial av: ");
-    Serial.println(sa);
-    Serial.print("Serial recived: ");
-    Serial.println(incoming_data);
-  }  
+//   if(sa > 0){
+//     String incoming_data = Serial.readString();
+//     Serial.print("Serial av: ");
+//     Serial.println(sa);
+//     Serial.print("Serial recived: ");
+//     Serial.println(incoming_data);
+//   }
   bool state = digitalRead(1);
   if(state == LOW){
     digitalWrite(0, HIGH);
