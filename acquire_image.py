@@ -202,13 +202,13 @@ class FLIR:
 
             # Initialize camera
             cam.Init()
-
+            # Here is for configure exposure static method
             # Retrieve GenICam nodemap
             nodemap = cam.GetNodeMap()
 
             # Acquire images
             result &= acquire_and_display_images(cam, nodemap, nodemap_tldevice)
-
+            # Here is for reset exposure static method
             # Deinitialize camera
             cam.DeInit()
 
