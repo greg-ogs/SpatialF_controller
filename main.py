@@ -2,9 +2,8 @@
 Created on Tuesday, January 22 of 2024 by Greg
 """
 import time
-
+from acquire_image import FLIR
 import matplotlib.pyplot as plt
-# import time
 import tensorflow as tf
 import keyboard
 import numpy as np

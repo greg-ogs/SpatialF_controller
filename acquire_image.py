@@ -115,61 +115,62 @@ class FLIR:
             fig.canvas.mpl_connect('close_event', handle_close)
 
             # Retrieve and display images
-            while(self.continue_recording):
-                try:
+            # while(self.continue_recording):
+            try:
 
-                    #  Retrieve next received image
-                    #
-                    #  *** NOTES ***
-                    #  Capturing an image houses images on the camera buffer. Trying
-                    #  to capture an image that does not exist will hang the camera.
-                    #
-                    #  *** LATER ***
-                    #  Once an image from the buffer is saved and/or no longer
-                    #  needed, the image must be released in order to keep the
-                    #  buffer from filling up.
+                #  Retrieve next received image
+                #
+                #  *** NOTES ***
+                #  Capturing an image houses images on the camera buffer. Trying
+                #  to capture an image that does not exist will hang the camera.
+                #
+                #  *** LATER ***
+                #  Once an image from the buffer is saved and/or no longer
+                #  needed, the image must be released in order to keep the
+                #  buffer from filling up.
 
-                    image_result = cam.GetNextImage(1000)
+                image_result = cam.GetNextImage(1000)
 
-                    #  Ensure image completion
-                    if image_result.IsIncomplete():
-                        print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
+                #  Ensure image completion
+                if image_result.IsIncomplete():
+                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
 
-                    else:
+                else:
 
-                        # Getting the image data as a numpy array
-                        image_data = image_result.GetNDArray()
+                    # Getting the image data as a numpy array
+                    image_data = image_result.GetNDArray()
 
-                        # Draws an image on the current figure
-                        plt.imshow(image_data, cmap='gray')
+                    # Draws an image on the current figure
+                    #plt.imshow(image_data, cmap='gray')
 
-                        # Interval in plt.pause(interval) determines how fast the images are displayed in a GUI
-                        # Interval is in seconds.
-                        plt.pause(0.001)
+                    # Interval in plt.pause(interval) determines how fast the images are displayed in a GUI
+                    # Interval is in seconds.
+                    #plt.pause(0.001)
 
-                        # Clear current reference of a figure. This will improve display speed significantly
-                        plt.clf()
+                    # Clear current reference of a figure. This will improve display speed significantly
+                    #plt.clf()
 
-                        # If user presses enter, close the program
-                        if keyboard.is_pressed('ENTER'):
-                            print('Program is closing...')
+                    # If user presses enter, close the program
+                    if keyboard.is_pressed('ENTER'):
+                        print('Program is closing...')
 
-                            # Close figure
-                            plt.close('all')
-                            input('Done! Press Enter to exit...')
-                            self.continue_recording=False
+                        # Close figure
+                        plt.close('all')
+                        input('Done! Press Enter to exit...')
+                        self.continue_recording=False
 
-                            #  Release image
-                    #
-                    #  *** NOTES ***
-                    #  Images retrieved directly from the camera (i.e. non-converted
-                    #  images) need to be released in order to keep from filling the
-                    #  buffer.
-                    image_result.Release()
+                        #  Release image
+                #
+                #  *** NOTES ***
+                #  Images retrieved directly from the camera (i.e. non-converted
+                #  images) need to be released in order to keep from filling the
+                #  buffer.
+                image_result.Release()
+                return True, image_data
 
-                except PySpin.SpinnakerException as ex:
-                    print('Error: %s' % ex)
-                    return False
+            except PySpin.SpinnakerException as ex:
+                print('Error: %s' % ex)
+                return False, np.zeros((500,500))
 
             #  End acquisition
             #
@@ -207,7 +208,7 @@ class FLIR:
             nodemap = cam.GetNodeMap()
 
             # Acquire images
-            result &= acquire_and_display_images(cam, nodemap, nodemap_tldevice)
+            result, image = FLIR.acquire_and_display_images(cam, nodemap, nodemap_tldevice)
             # Here is for reset exposure static method
             # Deinitialize camera
             cam.DeInit()
@@ -216,7 +217,7 @@ class FLIR:
             print('Error: %s' % ex)
             result = False
 
-        return result
+        return result, image
 
     @staticmethod
     def main():
@@ -263,13 +264,14 @@ class FLIR:
 
             print('Running example for camera %d...' % i)
 
-            result &= run_single_camera(cam)
+            result, image = FLIR.run_single_camera(cam)
             print('Camera %d example complete... \n' % i)
 
         # Release reference to camera
         # NOTE: Unlike the C++ examples, we cannot rely on pointer objects being automatically
         # cleaned up when going out of scope.
         # The usage of del is preferred to assigning the variable to None.
+# def delcam():
         del cam
 
         # Clear camera list before releasing system
@@ -278,7 +280,9 @@ class FLIR:
         # Release system instance
         system.ReleaseInstance()
 
-        input('Done! Press Enter to exit...')
+        # input('Done! Press Enter to exit...')
+        plt.imshow(image)
+        time.sleep(10)
         return result
 
 if __name__ == '__main__':
