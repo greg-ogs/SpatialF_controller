@@ -3,6 +3,7 @@ Created on Aug 10, 2024
 by greg-ogs
 """
 class FLIR:
+    image = np.zeros((500,500))
     def __init__(self):
         # libs
         import os
@@ -139,6 +140,7 @@ class FLIR:
 
                     # Getting the image data as a numpy array
                     image_data = image_result.GetNDArray()
+                    FLIR.image = image_data
 
                     # Draws an image on the current figure
                     #plt.imshow(image_data, cmap='gray')
@@ -166,11 +168,11 @@ class FLIR:
                 #  images) need to be released in order to keep from filling the
                 #  buffer.
                 image_result.Release()
-                return True, image_data
+                return True # , image_data
 
             except PySpin.SpinnakerException as ex:
                 print('Error: %s' % ex)
-                return False, np.zeros((500,500))
+                return False # , np.zeros((500,500))
 
             #  End acquisition
             #
@@ -208,7 +210,7 @@ class FLIR:
             nodemap = cam.GetNodeMap()
 
             # Acquire images
-            result, image = FLIR.acquire_and_display_images(cam, nodemap, nodemap_tldevice)
+            result = FLIR.acquire_and_display_images(cam, nodemap, nodemap_tldevice)
             # Here is for reset exposure static method
             # Deinitialize camera
             cam.DeInit()
@@ -217,7 +219,7 @@ class FLIR:
             print('Error: %s' % ex)
             result = False
 
-        return result, image
+        return result
 
     @staticmethod
     def main():
@@ -264,7 +266,7 @@ class FLIR:
 
             print('Running example for camera %d...' % i)
 
-            result, image = FLIR.run_single_camera(cam)
+            result = FLIR.run_single_camera(cam)
             print('Camera %d example complete... \n' % i)
 
         # Release reference to camera
@@ -281,12 +283,13 @@ class FLIR:
         system.ReleaseInstance()
 
         # input('Done! Press Enter to exit...')
-        plt.imshow(image)
+        plt.imshow(FLIR.image)
         time.sleep(10)
         return result
 
 if __name__ == '__main__':
-    if main():
+    FLIR_a = FLIR
+    if FLIR_a.main():
         sys.exit(0)
     else:
         sys.exit(1)

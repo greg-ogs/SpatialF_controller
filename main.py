@@ -322,6 +322,7 @@ class Camera:
                         image_data = image_result.GetNDArray()
                         if np.mean(image_data) > 100:
                             break
+            # This part is for cnn controller
             while self.continue_recording:
                 aux = aux + 1
                 try:
