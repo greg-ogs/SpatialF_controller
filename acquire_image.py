@@ -2,17 +2,24 @@
 Created on Aug 10, 2024
 by greg-ogs
 """
+# libs
+import numpy as np
+import os
+import PySpin
+import matplotlib.pyplot as plt
+import sys
+import keyboard
+import time
+
+import pylab as pl
+
+
 class FLIR:
-    image = np.zeros((500,500))
+
+    image = np.zeros((500, 500))
+
     def __init__(self):
-        # libs
-        import os
-        import PySpin
-        import matplotlib.pyplot as plt
-        import sys
-        import keyboard
-        import time
-        # Stop variable
+        # Stop continuous capture variable
         self.continue_recording = True
 
     def handle_close(self, evt):
@@ -109,11 +116,12 @@ class FLIR:
             # Close program
             print('Press enter to close the program..')
 
-            # Figure(1) is default so you can omit this line. Figure(0) will create a new window every time program hits this line
-            fig = plt.figure(1)
+            # Figure(1) is default so you can omit this line. Figure(0) will create a new window every time program
+            # hits this line
+            # fig = plt.figure(1)
 
             # Close the GUI when close event happens
-            fig.canvas.mpl_connect('close_event', handle_close)
+            # fig.canvas.mpl_connect('close_event', self.handle_close)
 
             # Retrieve and display images
             # while(self.continue_recording):
@@ -159,7 +167,7 @@ class FLIR:
                         # Close figure
                         plt.close('all')
                         input('Done! Press Enter to exit...')
-                        self.continue_recording=False
+                        self.continue_recording = False
 
                         #  Release image
                 #
@@ -168,11 +176,11 @@ class FLIR:
                 #  images) need to be released in order to keep from filling the
                 #  buffer.
                 image_result.Release()
-                return True # , image_data
+                return True  # , image_data
 
             except PySpin.SpinnakerException as ex:
                 print('Error: %s' % ex)
-                return False # , np.zeros((500,500))
+                return False  # , np.zeros((500,500))
 
             #  End acquisition
             #
@@ -187,8 +195,7 @@ class FLIR:
 
         return True
 
-    @staticmethod
-    def run_single_camera(cam):
+    def run_single_camera(self, cam):
         """
         This function acts as the body of the example; please see NodeMapInfo example
         for more in-depth comments on setting up cameras.
@@ -210,7 +217,7 @@ class FLIR:
             nodemap = cam.GetNodeMap()
 
             # Acquire images
-            result = FLIR.acquire_and_display_images(cam, nodemap, nodemap_tldevice)
+            result = self.acquire_and_display_images(cam, nodemap, nodemap_tldevice)
             # Here is for reset exposure static method
             # Deinitialize camera
             cam.DeInit()
@@ -221,8 +228,7 @@ class FLIR:
 
         return result
 
-    @staticmethod
-    def main():
+    def main(self):
         """
         Example entry point; notice the volume of data that the logging event handler
         prints out on debug despite the fact that very little really happens in this
@@ -250,7 +256,6 @@ class FLIR:
 
         # Finish if there are no cameras
         if num_cameras == 0:
-
             # Clear camera list before releasing system
             cam_list.Clear()
 
@@ -263,17 +268,16 @@ class FLIR:
 
         # Run example on each camera
         for i, cam in enumerate(cam_list):
-
             print('Running example for camera %d...' % i)
 
-            result = FLIR.run_single_camera(cam)
+            result = self.run_single_camera(cam)
             print('Camera %d example complete... \n' % i)
 
         # Release reference to camera
         # NOTE: Unlike the C++ examples, we cannot rely on pointer objects being automatically
         # cleaned up when going out of scope.
         # The usage of del is preferred to assigning the variable to None.
-# def delcam():
+        # def delcam():
         del cam
 
         # Clear camera list before releasing system
@@ -283,13 +287,19 @@ class FLIR:
         system.ReleaseInstance()
 
         # input('Done! Press Enter to exit...')
-        plt.imshow(FLIR.image)
-        time.sleep(10)
+
         return result
 
+
 if __name__ == '__main__':
-    FLIR_a = FLIR
+    FLIR_a = FLIR()
+    print("Enter to debugger")
+    time.sleep(2)
     if FLIR_a.main():
+        plt.imshow(FLIR.image)
+        plt.show()
         sys.exit(0)
     else:
+        plt.imshow(FLIR.image)
+        plt.show()
         sys.exit(1)
