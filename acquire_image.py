@@ -4,14 +4,11 @@ by greg-ogs
 """
 # libs
 import numpy as np
-import os
 import PySpin
 import matplotlib.pyplot as plt
 import sys
 import keyboard
 import time
-
-import pylab as pl
 
 
 class FLIR:
