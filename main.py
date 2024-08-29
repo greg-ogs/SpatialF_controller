@@ -463,15 +463,14 @@ if __name__ == "__main__":
     thread1 = threading.Thread(target=FLIR_a.main)
     thread1.start()
     thread1.join()
-    result1 = thread1
-    print("Result from MyClass1:", result1)
-
+    print("Result from MyClass1:")
+    plt.imshow(FLIR.image)
+    plt.show()
     time.sleep(2)
-    if result1():
-        plt.imshow(FLIR.image)
-        plt.show()
-        sys.exit(0)
-    else:
-        plt.imshow(FLIR.image)
-        plt.show()
-        sys.exit(1)
+    # if result1():
+    #
+    #     sys.exit(0)
+    # else:
+    #     plt.imshow(FLIR.image)
+    #     plt.show()
+    #     sys.exit(1)
