@@ -1,8 +1,8 @@
 """
 Created on Tuesday, January 22 of 2024 by Greg
 """
+import sys
 import time
-from acquire_image import FLIR
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keyboard
@@ -12,7 +12,8 @@ from PIL import Image as im
 import mysql.connector
 from Algorithms.stage_1.ANN import Stage2ANN
 from  Algorithms.stage_2.xy_cnn.IA import BackPropagation
-
+from acquire_image import FLIR
+import threading
 
 class WinnerMove:
     def BDWL22(self):
@@ -455,5 +456,22 @@ class SqlQuery:
 
 
 if __name__ == "__main__":
-    caminstance = Camera()
-    caminstance.capture()
+    print("Enter to debugger")
+    # caminstance = Camera()
+    # caminstance.capture()
+    FLIR_a = FLIR()
+    thread1 = threading.Thread(target=FLIR_a.main)
+    thread1.start()
+    thread1.join()
+    result1 = thread1
+    print("Result from MyClass1:", result1)
+
+    time.sleep(2)
+    if result1():
+        plt.imshow(FLIR.image)
+        plt.show()
+        sys.exit(0)
+    else:
+        plt.imshow(FLIR.image)
+        plt.show()
+        sys.exit(1)
