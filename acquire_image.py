@@ -11,13 +11,42 @@ import keyboard
 import time
 
 
+
 class FLIR:
     image = np.zeros((500, 500))
-    result = True
+    result = 1
 
     def __init__(self):
         # Stop continuous capture variable
         self.continue_recording = True
+
+        result = True
+
+        # Retrieve singleton reference to system object
+        self.system = PySpin.System.GetInstance()
+
+        # Get current library version
+        version = self.system.GetLibraryVersion()
+        print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
+
+        # Retrieve list of cameras from the system
+        cam_list = self.system.GetCameras()
+
+        num_cameras = cam_list.GetSize()
+
+        print('Number of cameras detected: %d' % num_cameras)
+
+        # Finish if there are no cameras
+        if num_cameras == 0:
+            # Clear camera list before releasing system
+            cam_list.Clear()
+
+            # Release system instance
+            self.system.ReleaseInstance()
+
+            print('Not enough cameras!')
+            input('Done! Press Enter to exit...')
+            return False
 
     def handle_close(self, evt):
         """
@@ -121,64 +150,64 @@ class FLIR:
             # fig.canvas.mpl_connect('close_event', self.handle_close)
 
             # Retrieve and display images
-            for i in range(100):
-                try:
-                    print(i)
-                    time.sleep(2)
+            # for i in range(100):
+            try:
+                print(i)
+                time.sleep(2)
 
-                    #  Retrieve next received image
-                    #
-                    #  *** NOTES ***
-                    #  Capturing an image houses images on the camera buffer. Trying
-                    #  to capture an image that does not exist will hang the camera.
-                    #
-                    #  *** LATER ***
-                    #  Once an image from the buffer is saved and/or no longer
-                    #  needed, the image must be released in order to keep the
-                    #  buffer from filling up.
+                #  Retrieve next received image
+                #
+                #  *** NOTES ***
+                #  Capturing an image houses images on the camera buffer. Trying
+                #  to capture an image that does not exist will hang the camera.
+                #
+                #  *** LATER ***
+                #  Once an image from the buffer is saved and/or no longer
+                #  needed, the image must be released in order to keep the
+                #  buffer from filling up.
 
-                    image_result = cam.GetNextImage(1000)
+                image_result = cam.GetNextImage(1000)
 
-                    #  Ensure image completion
-                    if image_result.IsIncomplete():
-                        print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
+                #  Ensure image completion
+                if image_result.IsIncomplete():
+                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
 
-                    else:
+                else:
 
-                        # Getting the image data as a numpy array
-                        image_data = image_result.GetNDArray()
-                        FLIR.image = image_data
+                    # Getting the image data as a numpy array
+                    image_data = image_result.GetNDArray()
+                    FLIR.image = image_data
 
-                        # Draws an image on the current figure
-                        # plt.imshow(image_data, cmap='gray')
+                    # Draws an image on the current figure
+                    # plt.imshow(image_data, cmap='gray')
 
-                        # Interval in plt.pause(interval) determines how fast the images are displayed in a GUI
-                        # Interval is in seconds.
-                        # plt.pause(0.001)
+                    # Interval in plt.pause(interval) determines how fast the images are displayed in a GUI
+                    # Interval is in seconds.
+                    # plt.pause(0.001)
 
-                        # Clear current reference of a figure. This will improve display speed significantly
-                        # plt.clf()
+                    # Clear current reference of a figure. This will improve display speed significantly
+                    # plt.clf()
 
-                        # If user presses enter, close the program
-                        if keyboard.is_pressed('ENTER'):
-                            print('Program is closing...')
+                    # If user presses enter, close the program
+                    if keyboard.is_pressed('ENTER'):
+                        print('Program is closing...')
 
-                            # Close figure
-                            plt.close('all')
-                            input('Done! Press Enter to exit...')
-                            self.continue_recording = False
+                        # Close figure
+                        plt.close('all')
+                        input('Done! Press Enter to exit...')
+                        self.continue_recording = False
 
-                            #  Release image
-                    #
-                    #  *** NOTES ***
-                    #  Images retrieved directly from the camera (i.e. non-converted
-                    #  images) need to be released in order to keep from filling the
-                    #  buffer.
-                    image_result.Release()
+                        #  Release image
+                #
+                #  *** NOTES ***
+                #  Images retrieved directly from the camera (i.e. non-converted
+                #  images) need to be released in order to keep from filling the
+                #  buffer.
+                image_result.Release()
 
-                except PySpin.SpinnakerException as ex:
-                    print('Error: %s' % ex)
-                    return False  # , np.zeros((500,500))
+            except PySpin.SpinnakerException as ex:
+                print('Error: %s' % ex)
+                return False  # , np.zeros((500,500))
 
             #  End acquisition
             #
@@ -235,36 +264,10 @@ class FLIR:
         :return: True if successful, False otherwise.
         :rtype: bool
         """
-        result = True
 
-        # Retrieve singleton reference to system object
-        system = PySpin.System.GetInstance()
-
-        # Get current library version
-        version = system.GetLibraryVersion()
-        print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
-
-        # Retrieve list of cameras from the system
-        cam_list = system.GetCameras()
-
-        num_cameras = cam_list.GetSize()
-
-        print('Number of cameras detected: %d' % num_cameras)
-
-        # Finish if there are no cameras
-        if num_cameras == 0:
-            # Clear camera list before releasing system
-            cam_list.Clear()
-
-            # Release system instance
-            system.ReleaseInstance()
-
-            print('Not enough cameras!')
-            input('Done! Press Enter to exit...')
-            return False
 
         # Run example on each camera
-        for i, cam in enumerate(cam_list):
+        for i, cam in enumerate(self.cam_list):
             print('Running example for camera %d...' % i)
 
             result = self.run_single_camera(cam)
@@ -277,15 +280,24 @@ class FLIR:
         # def delcam():
         del cam
 
-        # Clear camera list before releasing system
-        cam_list.Clear()
+        if not self.continue_recording:
+            # Clear camera list before releasing system
+            self.cam_list.Clear()
 
-        # Release system instance
-        system.ReleaseInstance()
+            # Release system instance
+            self.system.ReleaseInstance()
 
         # input('Done! Press Enter to exit...')
         FLIR.result = 1 if result else 0
-        # return result  # only for no multi thread
+        # return result, only for testing in this main
+
+    def stop_recording(self):
+        # Clear camera list before releasing system
+        self.cam_list.Clear()
+
+        # Release system instance
+        self.system.ReleaseInstance()
+        FLIR.result = 1
 
 
 if __name__ == '__main__':

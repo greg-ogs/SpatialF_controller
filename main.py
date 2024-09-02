@@ -9,12 +9,13 @@ import keyboard
 import numpy as np
 import PySpin
 from PIL import Image as im
-import threading
 import mysql.connector
+# control algorithms
 from Algorithms.stage_1.ANN import Stage2ANN
 from Algorithms.stage_2.xy_cnn.IA import BackPropagation
+# image acquisition
 from acquire_image import FLIR
-
+#
 
 class WinnerMove:
     def BDWL22(self):
@@ -471,24 +472,20 @@ if __name__ == "__main__":
     # caminstance = Camera()
     # caminstance.capture()
     FLIR_instance = FLIR()
-    # FLIR_instance.main
-    # plt.imshow(FLIR.image)
-    # plt.show()
-    time.sleep(2)
-    controller_instance = Controller(FLIR_instance)
-    # Threads
-    thread1 = threading.Thread(target=FLIR_instance.main)
-    thread1.start()
-    # thread1.join()
-    # while True:
-    #     time.sleep(2)
-    #     plt.imshow(FLIR.image)
-    #     plt.show()# Re-start thread because camera is exceeding its request limits
-    #     # 2 seconds delay to between requests in the for loop of acquire_image.py
-    if thread1.is_alive():
-        print(thread1.is_alive())
-        print(5555)
+    while True:
+        FLIR_instance.main()
+        plt.imshow(FLIR.image)
+        plt.show()
+        time.sleep(2)
+        if keyboard.is_pressed('ENTER'):
+            print('Program is closing...')
 
+            # Close figure
+            plt.close('all')
+            input('Done! Press Enter to exit...')
+            FLIR_instance.stop_recording()
+            break
+    # controller_instance = Controller(FLIR_instance)
     # if FLIR.result():
     #     sys.exit(0)
     # else:
