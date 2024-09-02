@@ -12,8 +12,8 @@ import time
 
 
 class FLIR:
-
     image = np.zeros((500, 500))
+    result = True
 
     def __init__(self):
         # Stop continuous capture variable
@@ -121,63 +121,64 @@ class FLIR:
             # fig.canvas.mpl_connect('close_event', self.handle_close)
 
             # Retrieve and display images
-            # while(self.continue_recording):
-            try:
+            for i in range(100):
+                try:
+                    print(i)
+                    time.sleep(2)
 
-                #  Retrieve next received image
-                #
-                #  *** NOTES ***
-                #  Capturing an image houses images on the camera buffer. Trying
-                #  to capture an image that does not exist will hang the camera.
-                #
-                #  *** LATER ***
-                #  Once an image from the buffer is saved and/or no longer
-                #  needed, the image must be released in order to keep the
-                #  buffer from filling up.
+                    #  Retrieve next received image
+                    #
+                    #  *** NOTES ***
+                    #  Capturing an image houses images on the camera buffer. Trying
+                    #  to capture an image that does not exist will hang the camera.
+                    #
+                    #  *** LATER ***
+                    #  Once an image from the buffer is saved and/or no longer
+                    #  needed, the image must be released in order to keep the
+                    #  buffer from filling up.
 
-                image_result = cam.GetNextImage(1000)
+                    image_result = cam.GetNextImage(1000)
 
-                #  Ensure image completion
-                if image_result.IsIncomplete():
-                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
+                    #  Ensure image completion
+                    if image_result.IsIncomplete():
+                        print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
 
-                else:
+                    else:
 
-                    # Getting the image data as a numpy array
-                    image_data = image_result.GetNDArray()
-                    FLIR.image = image_data
+                        # Getting the image data as a numpy array
+                        image_data = image_result.GetNDArray()
+                        FLIR.image = image_data
 
-                    # Draws an image on the current figure
-                    #plt.imshow(image_data, cmap='gray')
+                        # Draws an image on the current figure
+                        # plt.imshow(image_data, cmap='gray')
 
-                    # Interval in plt.pause(interval) determines how fast the images are displayed in a GUI
-                    # Interval is in seconds.
-                    #plt.pause(0.001)
+                        # Interval in plt.pause(interval) determines how fast the images are displayed in a GUI
+                        # Interval is in seconds.
+                        # plt.pause(0.001)
 
-                    # Clear current reference of a figure. This will improve display speed significantly
-                    #plt.clf()
+                        # Clear current reference of a figure. This will improve display speed significantly
+                        # plt.clf()
 
-                    # If user presses enter, close the program
-                    if keyboard.is_pressed('ENTER'):
-                        print('Program is closing...')
+                        # If user presses enter, close the program
+                        if keyboard.is_pressed('ENTER'):
+                            print('Program is closing...')
 
-                        # Close figure
-                        plt.close('all')
-                        input('Done! Press Enter to exit...')
-                        self.continue_recording = False
+                            # Close figure
+                            plt.close('all')
+                            input('Done! Press Enter to exit...')
+                            self.continue_recording = False
 
-                        #  Release image
-                #
-                #  *** NOTES ***
-                #  Images retrieved directly from the camera (i.e. non-converted
-                #  images) need to be released in order to keep from filling the
-                #  buffer.
-                image_result.Release()
-                return True  # , image_data
+                            #  Release image
+                    #
+                    #  *** NOTES ***
+                    #  Images retrieved directly from the camera (i.e. non-converted
+                    #  images) need to be released in order to keep from filling the
+                    #  buffer.
+                    image_result.Release()
 
-            except PySpin.SpinnakerException as ex:
-                print('Error: %s' % ex)
-                return False  # , np.zeros((500,500))
+                except PySpin.SpinnakerException as ex:
+                    print('Error: %s' % ex)
+                    return False  # , np.zeros((500,500))
 
             #  End acquisition
             #
@@ -185,7 +186,6 @@ class FLIR:
             #  Ending acquisition appropriately helps ensure that devices clean up
             #  properly and do not need to be power-cycled to maintain integrity.
             cam.EndAcquisition()
-
         except PySpin.SpinnakerException as ex:
             print('Error: %s' % ex)
             return False
@@ -284,15 +284,15 @@ class FLIR:
         system.ReleaseInstance()
 
         # input('Done! Press Enter to exit...')
-
-        return result
+        FLIR.result = 1 if result else 0
+        # return result  # only for no multi thread
 
 
 if __name__ == '__main__':
     FLIR_a = FLIR()
     print("Enter to debugger")
     time.sleep(2)
-    if FLIR_a.main():
+    if FLIR_a.main:
         plt.imshow(FLIR.image)
         plt.show()
         sys.exit(0)

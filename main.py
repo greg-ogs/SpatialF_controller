@@ -9,11 +9,12 @@ import keyboard
 import numpy as np
 import PySpin
 from PIL import Image as im
+import threading
 import mysql.connector
 from Algorithms.stage_1.ANN import Stage2ANN
-from  Algorithms.stage_2.xy_cnn.IA import BackPropagation
+from Algorithms.stage_2.xy_cnn.IA import BackPropagation
 from acquire_image import FLIR
-import threading
+
 
 class WinnerMove:
     def BDWL22(self):
@@ -323,7 +324,7 @@ class Camera:
                         image_data = image_result.GetNDArray()
                         if np.mean(image_data) > 100:
                             break
-            # This part is for cnn controller
+            # This part is for cnn Controller
             while self.continue_recording:
                 aux = aux + 1
                 try:
@@ -389,6 +390,16 @@ class Camera:
             print('Error: %s' % ex)
             return False
 
+
+class Controller:
+    def __init__(self, instance):
+        self.instance = instance
+
+    def main(self):
+        while True:
+            time.sleep(2)
+            plt.imshow(self.instance.image)
+            plt.show()
 
 
 class SqlQuery:
@@ -459,18 +470,26 @@ if __name__ == "__main__":
     print("Enter to debugger")
     # caminstance = Camera()
     # caminstance.capture()
-    FLIR_a = FLIR()
-    thread1 = threading.Thread(target=FLIR_a.main)
-    thread1.start()
-    thread1.join()
-    print("Result from MyClass1:")
-    plt.imshow(FLIR.image)
-    plt.show()
+    FLIR_instance = FLIR()
+    # FLIR_instance.main
+    # plt.imshow(FLIR.image)
+    # plt.show()
     time.sleep(2)
-    # if result1():
-    #
+    controller_instance = Controller(FLIR_instance)
+    # Threads
+    thread1 = threading.Thread(target=FLIR_instance.main)
+    thread1.start()
+    # thread1.join()
+    # while True:
+    #     time.sleep(2)
+    #     plt.imshow(FLIR.image)
+    #     plt.show()# Re-start thread because camera is exceeding its request limits
+    #     # 2 seconds delay to between requests in the for loop of acquire_image.py
+    if thread1.is_alive():
+        print(thread1.is_alive())
+        print(5555)
+
+    # if FLIR.result():
     #     sys.exit(0)
     # else:
-    #     plt.imshow(FLIR.image)
-    #     plt.show()
     #     sys.exit(1)
