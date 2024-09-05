@@ -11,7 +11,6 @@ import keyboard
 import time
 
 
-
 class FLIR:
     image = np.zeros((500, 500))
     result = 1
@@ -20,7 +19,7 @@ class FLIR:
         # Stop continuous capture variable
         self.continue_recording = True
 
-        result = True
+        FLIR.result = True
 
         # Retrieve singleton reference to system object
         self.system = PySpin.System.GetInstance()
@@ -30,23 +29,93 @@ class FLIR:
         print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
         # Retrieve list of cameras from the system
-        cam_list = self.system.GetCameras()
+        self.cam_list = self.system.GetCameras()
 
-        num_cameras = cam_list.GetSize()
+        num_cameras = self.cam_list.GetSize()
 
         print('Number of cameras detected: %d' % num_cameras)
 
         # Finish if there are no cameras
         if num_cameras == 0:
             # Clear camera list before releasing system
-            cam_list.Clear()
+            self.cam_list.Clear()
 
             # Release system instance
             self.system.ReleaseInstance()
 
             print('Not enough cameras!')
             input('Done! Press Enter to exit...')
-            return False
+            FLIR.result = False
+
+    def configure_exposure(self, cam):
+        """
+         This function configures a custom exposure time. Automatic exposure is turned
+         off in order to allow for the customization, and then the custom setting is
+         applied.
+
+         :param cam: Camera to configure exposure for.
+         :type cam: CameraPtr
+         :return: True if successful, False otherwise.
+         :rtype: bool
+        """
+
+        print('*** CONFIGURING EXPOSURE ***\n')
+
+        try:
+            result = True
+
+            # Turn off automatic exposure mode
+            #
+            # *** NOTES ***
+            # Automatic exposure prevents the manual configuration of exposure
+            # times and needs to be turned off for this example. Enumerations
+            # representing entry nodes have been added to QuickSpin. This allows
+            # for the much easier setting of enumeration nodes to new values.
+            #
+            # The naming convention of QuickSpin enums is the name of the
+            # enumeration node followed by an underscore and the symbolic of
+            # the entry node. Selecting "Off" on the "ExposureAuto" node is
+            # thus named "ExposureAuto_Off".
+            #
+            # *** LATER ***
+            # Exposure time can be set automatically or manually as needed. This
+            # example turns automatic exposure off to set it manually and back
+            # on to return the camera to its default state.
+
+            if cam.ExposureAuto.GetAccessMode() != PySpin.RW:
+                print('Unable to disable automatic exposure. Aborting...')
+                return False
+
+            cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+            print('Automatic exposure disabled...')
+
+            # Set exposure time manually; exposure time recorded in microseconds
+            #
+            # *** NOTES ***
+            # Notice that the node is checked for availability and writability
+            # prior to the setting of the node. In QuickSpin, availability and
+            # writability are ensured by checking the access mode.
+            #
+            # Further, it is ensured that the desired exposure time does not exceed
+            # the maximum. Exposure time is counted in microseconds - this can be
+            # found out either by retrieving the unit with the GetUnit() method or
+            # by checking SpinView.
+
+            if cam.ExposureTime.GetAccessMode() != PySpin.RW:
+                print('Unable to set exposure time. Aborting...')
+                return False
+
+            # Ensure desired exposure time does not exceed the maximum
+            exposure_time_to_set = 500.0
+            exposure_time_to_set = min(cam.ExposureTime.GetMax(), exposure_time_to_set)
+            cam.ExposureTime.SetValue(exposure_time_to_set)
+            print('Shutter time set to %s us...\n' % exposure_time_to_set)
+
+        except PySpin.SpinnakerException as ex:
+            print('Error: %s' % ex)
+            result = False
+
+        return result
 
     def handle_close(self, evt):
         """
@@ -152,8 +221,7 @@ class FLIR:
             # Retrieve and display images
             # for i in range(100):
             try:
-                print(i)
-                time.sleep(2)
+                # time.sleep(2)
 
                 #  Retrieve next received image
                 #
@@ -242,6 +310,9 @@ class FLIR:
             # Retrieve GenICam nodemap
             nodemap = cam.GetNodeMap()
 
+            if not self.configure_exposure(cam):
+                return False
+
             # Acquire images
             result = self.acquire_and_display_images(cam, nodemap, nodemap_tldevice)
             # Here is for reset exposure static method
@@ -264,7 +335,6 @@ class FLIR:
         :return: True if successful, False otherwise.
         :rtype: bool
         """
-
 
         # Run example on each camera
         for i, cam in enumerate(self.cam_list):

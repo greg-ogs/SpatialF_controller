@@ -15,6 +15,8 @@ from Algorithms.stage_1.ANN import Stage2ANN
 from Algorithms.stage_2.xy_cnn.IA import BackPropagation
 # image acquisition
 from acquire_image import FLIR
+
+
 #
 
 class WinnerMove:
@@ -117,99 +119,6 @@ class Camera:
         self.image = None
         self.continue_recording = True
 
-    def capture(self):
-        """
-        Example entry point; notice the volume of data that the logging event handler
-        prints out on debug despite the fact that very little really happens in this
-        example. Because of this, it may be better to have the logger set to lower
-        level in order to provide a more concise, focused log.
-
-        :return: True if successful, False otherwise.
-        :rtype: bool
-        """
-        result = True
-
-        # Retrieve singleton reference to system object
-        system = PySpin.System.GetInstance()
-
-        # Get current library version
-        version = system.GetLibraryVersion()
-        print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
-
-        # Retrieve list of cameras from the system
-        cam_list = system.GetCameras()
-
-        num_cameras = cam_list.GetSize()
-
-        print('Number of cameras detected: %d' % num_cameras)
-
-        # Finish if there are no cameras
-        if num_cameras == 0:
-            # Clear camera list before releasing system
-            cam_list.Clear()
-            image_data = [10, 10]
-
-            # Release system instance
-            system.ReleaseInstance()
-
-            print('Not enough cameras!')
-            # input('Done! Press Enter to exit...')
-            return False, image_data
-
-        # Run example on each camera
-        for i, cam in enumerate(cam_list):
-            print('Running example for camera %d...' % i)
-            # time.sleep(2)
-            result = self.run_single_camera(cam)
-            result &= result
-            print('CameraDataSet %d example complete... \n' % i)
-
-        # Release reference to camera
-        # NOTE: Unlike the C++ examples, we cannot rely on pointer objects being automatically
-        # cleaned up when going out of scope.
-        # The usage of del is preferred to assigning the variable to None.
-        del cam
-
-        # Clear camera list before releasing system
-        cam_list.Clear()
-
-        # Release system instance
-        system.ReleaseInstance()
-
-    def run_single_camera(self, cam):
-        """
-        This function acts as the body of the example; please see NodeMapInfo example
-        for more in-depth comments on setting up cameras.
-
-        :param cam: CameraDataSet to run on.
-        :type cam: CameraPtr
-        :return: True if successful, False otherwise.
-        :rtype: bool
-        """
-        try:
-            result = True
-
-            nodemap_tldevice = cam.GetTLDeviceNodeMap()
-
-            # Initialize camera
-            cam.Init()
-
-            # Retrieve GenICam nodemap
-            nodemap = cam.GetNodeMap()
-
-            # Acquire images
-            # result =bool , image_data
-            result = self.acquire_images(cam, nodemap, nodemap_tldevice)
-            # result &= result
-            # Deinitialize camera
-            cam.DeInit()
-
-        except PySpin.SpinnakerException as ex:
-            print('Error: %s' % ex)
-            result = False
-
-        return result
-
     def acquire_images(self, cam, nodemap, nodemap_tldevice):
         """
         This function continuously acquires images from a device and display them in a GUI.
@@ -226,170 +135,100 @@ class Camera:
         # global continue_recording #Check uses
         XSetpoint = 640
         YSetpoint = 512
-        sNodemap = cam.GetTLStreamNodeMap()
-
-        # Change bufferhandling mode to NewestOnly
-        node_bufferhandling_mode = PySpin.CEnumerationPtr(sNodemap.GetNode('StreamBufferHandlingMode'))
-        if not PySpin.IsAvailable(node_bufferhandling_mode) or not PySpin.IsWritable(node_bufferhandling_mode):
-            print('Unable to set stream buffer handling mode.. Aborting...')
-            return False
-
-        # Retrieve entry node from enumeration node
-        node_newestonly = node_bufferhandling_mode.GetEntryByName('NewestOnly')
-        if not PySpin.IsAvailable(node_newestonly) or not PySpin.IsReadable(node_newestonly):
-            print('Unable to set stream buffer handling mode.. Aborting...')
-            return False
-
-        # Retrieve integer value from entry node
-        node_newestonly_mode = node_newestonly.GetValue()
-
-        # Set integer value from entry node as new value of enumeration node
-        node_bufferhandling_mode.SetIntValue(node_newestonly_mode)
 
         print('*** IMAGE ACQUISITION ***\n')
-        try:
-            node_acquisition_mode = PySpin.CEnumerationPtr(nodemap.GetNode('AcquisitionMode'))
-            if not PySpin.IsAvailable(node_acquisition_mode) or not PySpin.IsWritable(node_acquisition_mode):
-                print('Unable to set acquisition mode to continuous (enum retrieval). Aborting...')
-                return False
+        print('Press enter to close the program..')
+        bp = BackPropagation()
+        qry = SqlQuery()
+        # Retrieve and display images
+        time1 = time.time()
+        aux = 0
+        model = tf.keras.models.load_model("model.keras")
+        # Testing first move (stage 1 algorithm)
+        stage1 = Stage2ANN
+        loop_aux = 0
+        from_0 = input("Starting from 0? [Y/N]: ")
+        if from_0 == 'Y' or from_0 == 'y':
+            while True:
+                loop_aux = loop_aux + 1
+                points, midd_point = stage1.prepare_data()
+                X = points[loop_aux][0]
+                Y = points[loop_aux][1]
+                # qry.map_sql(X, Y)
+                qry.qy(X, Y)
+                qry.next_step()
+                image_result = cam.GetNextImage(100)
 
-            # Retrieve entry node from enumeration node
-            node_acquisition_mode_continuous = node_acquisition_mode.GetEntryByName('Continuous')
-            if not PySpin.IsAvailable(node_acquisition_mode_continuous) or not PySpin.IsReadable(
-                    node_acquisition_mode_continuous):
-                print('Unable to set acquisition mode to continuous (entry retrieval). Aborting...')
-                return False
+                #  Ensure image completion
+                if image_result.IsIncomplete():
+                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
 
-            # Retrieve integer value from entry node
-            acquisition_mode_continuous = node_acquisition_mode_continuous.GetValue()
+                else:
+                    image_data = image_result.GetNDArray()
+                    if np.mean(image_data) > 100:
+                        break
+        # This part is for cnn Controller
+        while self.continue_recording:
+            aux = aux + 1
+            try:
 
-            # Set integer value from entry node as new value of enumeration node
-            node_acquisition_mode.SetIntValue(acquisition_mode_continuous)
+                #  Retrieve next received image
+                #
+                #  *** NOTES ***
+                #  Capturing an image houses images on the camera buffer. Trying
+                #  to capture an image that does not exist will hang the camera.
+                #
+                #  *** LATER ***
+                #  Once an image from the buffer is saved and/or no longer
+                #  needed, the image must be released in order to keep the
+                #  buffer from filling up.
+                # time.sleep(2)
+                image_result = cam.GetNextImage(100)
 
-            print('Acquisition mode set to continuous...')
+                #  Ensure image completion
+                if image_result.IsIncomplete():
+                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
 
-            #  Begin acquiring images
-            #
-            #  *** NOTES ***
-            #  What happens when the camera begins acquiring images depends on the
-            #  acquisition mode. Single frame captures only a single image, multi
-            #  frame catures a set number of images, and continuous captures a
-            #  continuous stream of images.
-            #
-            #  *** LATER ***
-            #  Image acquisition must be ended when no more images are needed.
-            cam.BeginAcquisition()
+                else:
 
-            print('Acquiring images...')
-
-            #  Retrieve device serial number for filename
-            #
-            #  *** NOTES ***
-            #  The device serial number is retrieved in order to keep cameras from
-            #  overwriting one another. Grabbing image IDs could also accomplish
-            #  this.
-            device_serial_number = ''
-            node_device_serial_number = PySpin.CStringPtr(nodemap_tldevice.GetNode('DeviceSerialNumber'))
-            if PySpin.IsAvailable(node_device_serial_number) and PySpin.IsReadable(node_device_serial_number):
-                device_serial_number = node_device_serial_number.GetValue()
-                print('Device serial number retrieved as %s...' % device_serial_number)
-
-            # Close program
-            print('Press enter to close the program..')
-            bp = BackPropagation()
-            qry = SqlQuery()
-            # Retrieve and display images
-            time1 = time.time()
-            aux = 0
-            model = tf.keras.models.load_model("model.keras")
-            # Testing first move (stage 1 algorithm)
-            stage1 = Stage2ANN
-            loop_aux = 0
-            from_0 = input("Starting from 0? [Y/N]: ")
-            if from_0 == 'Y' or from_0 == 'y':
-                while True:
-                    loop_aux = loop_aux + 1
-                    points, midd_point = stage1.prepare_data()
-                    X = points[loop_aux][0]
-                    Y = points[loop_aux][1]
+                    # Getting the image data as a numpy array
+                    image_data = image_result.GetNDArray()
+                    image_data = np.uint8(image_data)
+                    # 3D array for superpixel job
+                    A = image_data
+                    B = image_data
+                    C = np.dstack((A, B))
+                    image = np.dstack((C, B))
+                    data = im.fromarray(image)
+                    data = data.resize((375, 300))
+                    imname = "img_" + str(aux) + ".png"
+                    # imsave = data.save(imname)
+                    # plt.imshow(data)
+                    # plt.show()
+                    winner_class = bp.predict(data, model)
+                    switcher = WinnerMove()
+                    case = getattr(switcher, winner_class, switcher.default)
+                    X, Y, self.continue_recording = case()
                     # qry.map_sql(X, Y)
                     qry.qy(X, Y)
                     qry.next_step()
-                    image_result = cam.GetNextImage(100)
+                    if keyboard.is_pressed('ENTER'):
+                        # print('Program is closing...')
 
-                    #  Ensure image completion
-                    if image_result.IsIncomplete():
-                        print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
-
-                    else:
-                        image_data = image_result.GetNDArray()
-                        if np.mean(image_data) > 100:
-                            break
-            # This part is for cnn Controller
-            while self.continue_recording:
-                aux = aux + 1
-                try:
-
-                    #  Retrieve next received image
-                    #
-                    #  *** NOTES ***
-                    #  Capturing an image houses images on the camera buffer. Trying
-                    #  to capture an image that does not exist will hang the camera.
-                    #
-                    #  *** LATER ***
-                    #  Once an image from the buffer is saved and/or no longer
-                    #  needed, the image must be released in order to keep the
-                    #  buffer from filling up.
-                    # time.sleep(2)
-                    image_result = cam.GetNextImage(100)
-
-                    #  Ensure image completion
-                    if image_result.IsIncomplete():
-                        print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
-
-                    else:
-
-                        # Getting the image data as a numpy array
-                        image_data = image_result.GetNDArray()
-                        image_data = np.uint8(image_data)
-                        # 3D array for superpixel job
-                        A = image_data
-                        B = image_data
-                        C = np.dstack((A, B))
-                        image = np.dstack((C, B))
-                        data = im.fromarray(image)
-                        data = data.resize((375, 300))
-                        imname = "img_" + str(aux) + ".png"
-                        # imsave = data.save(imname)
-                        # plt.imshow(data)
-                        # plt.show()
-                        winner_class = bp.predict(data, model)
-                        switcher = WinnerMove()
-                        case = getattr(switcher, winner_class, switcher.default)
-                        X, Y, self.continue_recording = case()
-                        # qry.map_sql(X, Y)
-                        qry.qy(X, Y)
-                        qry.next_step()
-                        if keyboard.is_pressed('ENTER'):
-                            # print('Program is closing...')
-
-                            # Close figure
-                            # plt.close('all')
-                            # input('Done! Press Enter to exit...')
-                            self.continue_recording = False
-                except PySpin.SpinnakerException as ex:
-                    print('Error: %s' % ex)
-                    return False
-            plt.imshow(data)
-            plt.show()
-            data.save('ERROR.png')
-            time2 = time.time()
-            print('Time = ' + str(time2 - time1))
-            ttime = time2 - time1
-            qry.sqltime(ttime)
-        except PySpin.SpinnakerException as ex:
-            print('Error: %s' % ex)
-            return False
+                        # Close figure
+                        # plt.close('all')
+                        # input('Done! Press Enter to exit...')
+                        self.continue_recording = False
+            except PySpin.SpinnakerException as ex:
+                print('Error: %s' % ex)
+                return False
+        plt.imshow(data)
+        plt.show()
+        data.save('ERROR.png')
+        time2 = time.time()
+        print('Time = ' + str(time2 - time1))
+        ttime = time2 - time1
+        qry.sqltime(ttime)
 
 
 class Controller:
@@ -474,9 +313,18 @@ if __name__ == "__main__":
     FLIR_instance = FLIR()
     while True:
         FLIR_instance.main()
-        plt.imshow(FLIR.image)
+        plt.imshow(FLIR_instance.image, cmap='gray')
         plt.show()
         time.sleep(2)
+        image_data = FLIR_instance.image
+        A = image_data
+        B = image_data
+        C = np.dstack((A, B))
+        image = np.dstack((C, B))
+        print(image.shape)
+        data = im.fromarray(image)
+        data = data.resize((375, 300))
+        print(data.size)
         if keyboard.is_pressed('ENTER'):
             print('Program is closing...')
 
