@@ -10,236 +10,169 @@ import numpy as np
 import PySpin
 from PIL import Image as im
 import mysql.connector
-# control algorithms
+
+# Control algorithms
+# ANN for stage 1
 from Algorithms.stage_1.ANN import Stage2ANN
+# CNN
 from Algorithms.stage_2.xy_cnn.IA import BackPropagation
+
 # image acquisition
 from acquire_image import FLIR
 
-
-#
-
 class WinnerMove:
-    def BDWL22(self):
+    @staticmethod
+    def BDWL22():
         return -0.035, 0.04, True
 
-    def BDWL23(self):
+    @staticmethod
+    def BDWL23():
         return -0.035, 0.012, True
 
-    def BDWL32(self):
+    @staticmethod
+    def BDWL32():
         return -0.02, 0.06, True
 
-    def BDWL33(self):
+    @staticmethod
+    def BDWL33():
         return -0.03, 0.013, True
 
-    def BDWLS(self):
+    @staticmethod
+    def BDWLS():
         return -0.035, 0.04, True
 
-    def BDWR22(self):
+    @staticmethod
+    def BDWR22():
         return 0.035, 0.04, True
 
-    def BDWR23(self):
+    @staticmethod
+    def BDWR23():
         return 0.035, 0.012, True
 
-    def BDWR32(self):
+    @staticmethod
+    def BDWR32():
         return 0.02, 0.04, True
 
-    def BDWR33(self):
+    @staticmethod
+    def BDWR33():
         return 0.03, 0.013, True
 
-    def BDWRS(self):
+    @staticmethod
+    def BDWRS():
         return 0.035, 0.04, True
 
-    def BUPL22(self):
+    @staticmethod
+    def BUPL22():
         return -0.035, -0.04, True
 
-    def BUPL23(self):
+    @staticmethod
+    def BUPL23():
         return -0.035, -0.012, True
 
-    def BUPL32(self):
+    @staticmethod
+    def BUPL32():
         return -0.02, -0.04, True
 
-    def BUPL33(self):
+    @staticmethod
+    def BUPL33():
         return -0.03, -0.013, True
 
-    def BUPLS(self):
+    @staticmethod
+    def BUPLS():
         return -0.035, -0.04, True
 
-    def BUPR22(self):
+    @staticmethod
+    def BUPR22():
         return 0.035, -0.04, True
 
-    def BUPR23(self):
+    @staticmethod
+    def BUPR23():
         return 0.035, -0.012, True
 
-    def BUPR32(self):
+    @staticmethod
+    def BUPR32():
         return 0.02, -0.04, True
 
-    def BUPR33(self):
+    @staticmethod
+    def BUPR33():
         return 0.03, -0.013, True
 
-    def BUPRS(self):
+    @staticmethod
+    def BUPRS():
         return 0.035, -0.04, True
 
-    def CDW(self):
+    @staticmethod
+    def CDW():
         return 0, 0.045, True
 
-    def CENTER(self):
+    @staticmethod
+    def CENTER():
         qry = SqlQuery()
         qry.lab_stop()
         return 0, 0, False
 
-    def CL(self):
+    @staticmethod
+    def CL():
         return -0.08, 0, True
 
-    def CR(self):
+    @staticmethod
+    def CR():
         return 0.08, 0, True
 
-    def CUP(self):
+    @staticmethod
+    def CUP():
         return 0, -0.045, True
 
-    def ncup(self):
+    @staticmethod
+    def ncup():
         return 0, -0.02, True
 
-    def ncr(self):
+    @staticmethod
+    def ncr():
         return 0.04, 0, True
 
-    def ncl(self):
+    @staticmethod
+    def ncl():
         return -0.04, 0, True
 
-    def ncdw(self):
+    @staticmethod
+    def ncdw():
         return 0, 0.02, True
 
-    def default(self):
+    @staticmethod
+    def default():
         return 0, 0, False
 
+# ======================================================================================================================
+        # plt.imshow(data)
+        # plt.show()
+        # data.save('ERROR.png')
+        # time2 = time.time()
+        # print('Time = ' + str(time2 - time1))
+        # ttime = time2 - time1
+        # qry.sqltime(ttime)
+# ======================================================================================================================
 
-class Camera:
-    def __init__(self):
+class CNNController:
+    def __init__(self, data):
+        # Incoming image
+        self.im_data = data
+        # Set-points
+        self.XSetpoint = 640
+        self.YSetpoint = 512
+        # instances
+        self.bp = BackPropagation()
+        self.qry = SqlQuery()
+        self.model = tf.keras.models.load_model("model.keras")
 
-        self.image = None
-        self.continue_recording = True
-
-    def acquire_images(self, cam, nodemap, nodemap_tldevice):
-        """
-        This function continuously acquires images from a device and display them in a GUI.
-
-        :param cam: CameraDataSet to acquire images from.
-        :param nodemap: Device nodemap.
-        :param nodemap_tldevice: Transport layer device nodemap.
-        :type cam: CameraPtr
-        :type nodemap: INodeMap
-        :type nodemap_tldevice: INodeMap
-        :return: True if successful, False otherwise.
-        :rtype: bool
-        """
-        # global continue_recording #Check uses
-        XSetpoint = 640
-        YSetpoint = 512
-
-        print('*** IMAGE ACQUISITION ***\n')
-        print('Press enter to close the program..')
-        bp = BackPropagation()
-        qry = SqlQuery()
-        # Retrieve and display images
-        time1 = time.time()
-        aux = 0
-        model = tf.keras.models.load_model("model.keras")
-        # Testing first move (stage 1 algorithm)
-        stage1 = Stage2ANN
-        loop_aux = 0
-        from_0 = input("Starting from 0? [Y/N]: ")
-        if from_0 == 'Y' or from_0 == 'y':
-            while True:
-                loop_aux = loop_aux + 1
-                points, midd_point = stage1.prepare_data()
-                X = points[loop_aux][0]
-                Y = points[loop_aux][1]
-                # qry.map_sql(X, Y)
-                qry.qy(X, Y)
-                qry.next_step()
-                image_result = cam.GetNextImage(100)
-
-                #  Ensure image completion
-                if image_result.IsIncomplete():
-                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
-
-                else:
-                    image_data = image_result.GetNDArray()
-                    if np.mean(image_data) > 100:
-                        break
-        # This part is for cnn Controller
-        while self.continue_recording:
-            aux = aux + 1
-            try:
-
-                #  Retrieve next received image
-                #
-                #  *** NOTES ***
-                #  Capturing an image houses images on the camera buffer. Trying
-                #  to capture an image that does not exist will hang the camera.
-                #
-                #  *** LATER ***
-                #  Once an image from the buffer is saved and/or no longer
-                #  needed, the image must be released in order to keep the
-                #  buffer from filling up.
-                # time.sleep(2)
-                image_result = cam.GetNextImage(100)
-
-                #  Ensure image completion
-                if image_result.IsIncomplete():
-                    print('Image incomplete with image status %d ...' % image_result.GetImageStatus())
-
-                else:
-
-                    # Getting the image data as a numpy array
-                    image_data = image_result.GetNDArray()
-                    image_data = np.uint8(image_data)
-                    # 3D array for superpixel job
-                    A = image_data
-                    B = image_data
-                    C = np.dstack((A, B))
-                    image = np.dstack((C, B))
-                    data = im.fromarray(image)
-                    data = data.resize((375, 300))
-                    imname = "img_" + str(aux) + ".png"
-                    # imsave = data.save(imname)
-                    # plt.imshow(data)
-                    # plt.show()
-                    winner_class = bp.predict(data, model)
-                    switcher = WinnerMove()
-                    case = getattr(switcher, winner_class, switcher.default)
-                    X, Y, self.continue_recording = case()
-                    # qry.map_sql(X, Y)
-                    qry.qy(X, Y)
-                    qry.next_step()
-                    if keyboard.is_pressed('ENTER'):
-                        # print('Program is closing...')
-
-                        # Close figure
-                        # plt.close('all')
-                        # input('Done! Press Enter to exit...')
-                        self.continue_recording = False
-            except PySpin.SpinnakerException as ex:
-                print('Error: %s' % ex)
-                return False
-        plt.imshow(data)
-        plt.show()
-        data.save('ERROR.png')
-        time2 = time.time()
-        print('Time = ' + str(time2 - time1))
-        ttime = time2 - time1
-        qry.sqltime(ttime)
-
-
-class Controller:
-    def __init__(self, instance):
-        self.instance = instance
-
-    def main(self):
-        while True:
-            time.sleep(2)
-            plt.imshow(self.instance.image)
-            plt.show()
+    def predict(self):
+        winner_class = self.bp.predict(self.im_data, self.model)
+        switcher = WinnerMove()
+        case = getattr(switcher, winner_class, switcher.default)
+        X, Y, stop_h = case()
+        self.qry.qy(X, Y)
+        self.qry.next_step()
+        return stop_h
 
 
 class SqlQuery:
@@ -308,33 +241,31 @@ class SqlQuery:
 
 if __name__ == "__main__":
     print("Enter to debugger")
-    # caminstance = Camera()
-    # caminstance.capture()
     FLIR_instance = FLIR()
-    while True:
-        FLIR_instance.main()
+    stop_handle = True
+    while stop_handle: # inverted boolean logic in this while condition
+        exit_code = FLIR_instance.main()
+
         plt.imshow(FLIR_instance.image, cmap='gray')
         plt.show()
         time.sleep(2)
+        # Preprocessing of the image
         image_data = FLIR_instance.image
         A = image_data
         B = image_data
         C = np.dstack((A, B))
         image = np.dstack((C, B))
-        print(image.shape)
         data = im.fromarray(image)
         data = data.resize((375, 300))
-        print(data.size)
+        # Start CNN controller, a time independent controller
+        CNNController = CNNController(data)
+        stop_handle = CNNController.predict()
         if keyboard.is_pressed('ENTER'):
             print('Program is closing...')
-
-            # Close figure
-            plt.close('all')
             input('Done! Press Enter to exit...')
-            FLIR_instance.stop_recording()
             break
-    # controller_instance = Controller(FLIR_instance)
-    # if FLIR.result():
-    #     sys.exit(0)
-    # else:
-    #     sys.exit(1)
+    FLIR_instance.stop_recording()
+    if exit_code:
+        sys.exit(0)
+    else:
+        sys.exit(1)

@@ -60,7 +60,7 @@ class FLIR:
         """
 
         print('*** CONFIGURING EXPOSURE ***\n')
-
+        print(self.cam_list)
         try:
             result = True
 
@@ -358,8 +358,8 @@ class FLIR:
             self.system.ReleaseInstance()
 
         # input('Done! Press Enter to exit...')
-        FLIR.result = 1 if result else 0
-        # return result, only for testing in this main
+        # FLIR.result = 1 if result else 0
+        return result
 
     def stop_recording(self):
         # Clear camera list before releasing system
