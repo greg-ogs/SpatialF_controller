@@ -20,6 +20,7 @@ from Algorithms.stage_2.xy_cnn.IA import BackPropagation
 # image acquisition
 from acquire_image import FLIR
 
+
 class WinnerMove:
     @staticmethod
     def BDWL22():
@@ -143,14 +144,15 @@ class WinnerMove:
     def default():
         return 0, 0, False
 
+
 # ======================================================================================================================
-        # plt.imshow(data)
-        # plt.show()
-        # data.save('ERROR.png')
-        # time2 = time.time()
-        # print('Time = ' + str(time2 - time1))
-        # ttime = time2 - time1
-        # qry.sqltime(ttime)
+# plt.imshow(data)
+# plt.show()
+# data.save('ERROR.png')
+# time2 = time.time()
+# print('Time = ' + str(time2 - time1))
+# ttime = time2 - time1
+# qry.sqltime(ttime)
 # ======================================================================================================================
 
 class CNNController:
@@ -163,7 +165,8 @@ class CNNController:
         # instances
         self.bp = BackPropagation()
         self.qry = SqlQuery()
-        self.model = tf.keras.models.load_model("model.keras")
+        self.model = tf.keras.models.load_model("model_CNN.keras")
+        # C:\Users\grego\OneDrive - Universidad de Guadalajara\GitHub\SpatialF_controller\model_CNN.keras
 
     def predict(self):
         winner_class = self.bp.predict(self.im_data, self.model)
@@ -171,7 +174,7 @@ class CNNController:
         case = getattr(switcher, winner_class, switcher.default)
         X, Y, stop_h = case()
         self.qry.qy(X, Y)
-        self.qry.next_step()
+        stop_h = self.qry.next_step()
         return stop_h
 
 
@@ -216,7 +219,8 @@ class SqlQuery:
         self.mycursor.execute(sql, val)
         self.mydb.commit()
 
-    def next_step(self):
+    @staticmethod
+    def next_step():
         # def for py
         while True:
             mydb0 = mysql.connector.connect(
@@ -236,14 +240,19 @@ class SqlQuery:
             time.sleep(0.01)
             # print(myresult)
             if myresult == 0:
-                break
+                return True
+            if keyboard.is_pressed('ENTER'):
+                print('Program is closing...')
+                # input('Done! Press Enter to exit...')
+                return False
 
 
 if __name__ == "__main__":
-    print("Enter to debugger")
     FLIR_instance = FLIR()
     stop_handle = True
-    while stop_handle: # inverted boolean logic in this while condition
+    # Start CNN controller, a time independent controller
+    CNNController = CNNController(None)
+    while stop_handle:  # inverted boolean logic in this while condition
         exit_code = FLIR_instance.main()
 
         plt.imshow(FLIR_instance.image, cmap='gray')
@@ -256,14 +265,10 @@ if __name__ == "__main__":
         C = np.dstack((A, B))
         image = np.dstack((C, B))
         data = im.fromarray(image)
-        data = data.resize((375, 300))
-        # Start CNN controller, a time independent controller
-        CNNController = CNNController(data)
+        data = data.resize((500, 400))
+        CNNController.im_data = data
         stop_handle = CNNController.predict()
-        if keyboard.is_pressed('ENTER'):
-            print('Program is closing...')
-            input('Done! Press Enter to exit...')
-            break
+
     FLIR_instance.stop_recording()
     if exit_code:
         sys.exit(0)

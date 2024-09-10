@@ -364,9 +364,10 @@ class FLIR:
     def stop_recording(self):
         # Clear camera list before releasing system
         self.cam_list.Clear()
-
+        time.sleep(1)  # Required to close properly
         # Release system instance
         self.system.ReleaseInstance()
+        time.sleep(1)  # Required to close properly
         FLIR.result = 1
 
 

@@ -22,7 +22,7 @@ class BackPropagation:
         self.img_height = 400
         self.img_width = 500
         self.image_size = (self.img_height, self.img_width)
-        self.data_dir = "C:/Users/grego/Downloads/GitHub/DATASET"
+        self.data_dir = "C:/Users/grego/OneDrive - Universidad de Guadalajara/GitHub/Deprecated/DATASET"
 
         # image_count = len(list(data_dir.glob('*/*.jpg')))
         # print(image_count)
