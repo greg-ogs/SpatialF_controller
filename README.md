@@ -2,7 +2,7 @@
 This repo contains the code for a controller with the capability to align a spatial filter in X-Y-Z plane using neural 
 networks and diffuse control.
 
-> The Z axis is not developed yet.
+> The Z axis is in developed already.
 
 # Setting the environment
 
