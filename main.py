@@ -215,7 +215,7 @@ class SqlQuery:
     def qy(self, X, Y):
         # def for py
         sql = "UPDATE DATA SET X = %s, Y = %s, SIGNALS = %s WHERE ID = %s"
-        val = (X, Y, 1, 1)
+        val = (-X, -Y, 1, 1)
         self.mycursor.execute(sql, val)
         self.mydb.commit()
 
