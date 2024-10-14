@@ -255,7 +255,7 @@ def acquire_and_display_images(cam, nodemap, nodemap_tldevice):
         fig.canvas.mpl_connect('close_event', handle_close)
 
         # Retrieve and display images
-        k = 1000
+        k = 0
         while continue_recording:
             try:
 
@@ -304,7 +304,7 @@ def acquire_and_display_images(cam, nodemap, nodemap_tldevice):
                         plt.close('all')
                         input('Done! Press Enter to exit...')
                         continue_recording = False
-                    if k >= 2000:
+                    if k >= 1000:
                         print('Program is closing...')
 
                         # Close figure
