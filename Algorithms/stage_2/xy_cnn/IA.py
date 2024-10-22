@@ -11,18 +11,19 @@ class BackPropagation:
     def __init__(self):
         self.val_ds = None
         self.train_ds = None
-        self.class_names = ['BDWL22', 'BDWL23', 'BDWL32', 'BDWL33', 'BDWLS', 'BDWR22', 'BDWR23',
-                            'BDWR32', 'BDWR33', 'BDWRS', 'BUPL22', 'BUPL23', 'BUPL32', 'BUPL33', 'BUPLS',
-                            'BUPR22', 'BUPR23', 'BUPR32', 'BUPR33', 'BUPRS', 'CDW', 'CENTER', 'CL', 'CR', 'CUP',
-                            'ncdw', 'ncl', 'ncr', 'ncup']
-
+        # self.class_names = ['BDWL22', 'BDWL23', 'BDWL32', 'BDWL33', 'BDWLS', 'BDWR22', 'BDWR23',
+        #                     'BDWR32', 'BDWR33', 'BDWRS', 'BUPL22', 'BUPL23', 'BUPL32', 'BUPL33', 'BUPLS',
+        #                     'BUPR22', 'BUPR23', 'BUPR32', 'BUPR33', 'BUPRS', 'CDW', 'CENTER', 'CL', 'CR', 'CUP',
+        #                     'ncdw', 'ncl', 'ncr', 'ncup']
+        self.class_names = ['c', 'd0', 'dl0', 'dr0', 'l0', 'r0', 'u0', 'ul0', 'ur0']
         # Batch * 2 and image from 180 by 180 to 700 * 875
 
         self.batch_size = 128
         self.img_height = 400
         self.img_width = 500
         self.image_size = (self.img_height, self.img_width)
-        self.data_dir = "C:/Users/grego/OneDrive - Universidad de Guadalajara/GitHub/Deprecated/DATASET"
+        self.data_dir = ("C:/Users/grego/OneDrive - Universidad de "
+                         "Guadalajara/GitHub/SpatialF_controller/datasets/stage_2")
 
         # image_count = len(list(data_dir.glob('*/*.jpg')))
         # print(image_count)

@@ -106,7 +106,7 @@ class FLIR:
                 return False
 
             # Ensure desired exposure time does not exceed the maximum
-            exposure_time_to_set = 500.0
+            exposure_time_to_set = 7000.0
             exposure_time_to_set = min(cam.ExposureTime.GetMax(), exposure_time_to_set)
             cam.ExposureTime.SetValue(exposure_time_to_set)
             print('Shutter time set to %s us...\n' % exposure_time_to_set)

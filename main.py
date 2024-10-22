@@ -22,123 +22,123 @@ from acquire_image import FLIR
 
 
 class WinnerMove:
-    @staticmethod
-    def BDWL22():
-        return -0.035, 0.04, True
+    # @staticmethod
+    # def BDWL22():
+    #     return -0.035, 0.04, True
+    #
+    # @staticmethod
+    # def BDWL23():
+    #     return -0.035, 0.012, True
+    #
+    # @staticmethod
+    # def BDWL32():
+    #     return -0.02, 0.06, True
+    #
+    # @staticmethod
+    # def BDWL33():
+    #     return -0.03, 0.013, True
 
     @staticmethod
-    def BDWL23():
-        return -0.035, 0.012, True
+    def dl0():
+        return 0.0035, 0.004, True
+
+    # @staticmethod
+    # def BDWR22():
+    #     return 0.035, 0.04, True
+    #
+    # @staticmethod
+    # def BDWR23():
+    #     return 0.035, 0.012, True
+    #
+    # @staticmethod
+    # def BDWR32():
+    #     return 0.02, 0.04, True
+    #
+    # @staticmethod
+    # def BDWR33():
+    #     return 0.03, 0.013, True
 
     @staticmethod
-    def BDWL32():
-        return -0.02, 0.06, True
+    def dr0():
+        return -0.0035, 0.004, True
+
+    # @staticmethod
+    # def BUPL22():
+    #     return -0.035, -0.04, True
+    #
+    # @staticmethod
+    # def BUPL23():
+    #     return -0.035, -0.012, True
+    #
+    # @staticmethod
+    # def BUPL32():
+    #     return -0.02, -0.04, True
+    #
+    # @staticmethod
+    # def BUPL33():
+    #     return -0.03, -0.013, True
 
     @staticmethod
-    def BDWL33():
-        return -0.03, 0.013, True
+    def ul0():
+        return 0.0035, -0.004, True
+
+    # @staticmethod
+    # def BUPR22():
+    #     return 0.035, -0.04, True
+    #
+    # @staticmethod
+    # def BUPR23():
+    #     return 0.035, -0.012, True
+    #
+    # @staticmethod
+    # def BUPR32():
+    #     return 0.02, -0.04, True
+
+    # @staticmethod
+    # def BUPR33():
+    #     return 0.03, -0.013, True
 
     @staticmethod
-    def BDWLS():
-        return -0.035, 0.04, True
+    def ur0():
+        return -0.0035, -0.004, True
 
     @staticmethod
-    def BDWR22():
-        return 0.035, 0.04, True
+    def d0():
+        return 0, 0.0045, True
 
     @staticmethod
-    def BDWR23():
-        return 0.035, 0.012, True
-
-    @staticmethod
-    def BDWR32():
-        return 0.02, 0.04, True
-
-    @staticmethod
-    def BDWR33():
-        return 0.03, 0.013, True
-
-    @staticmethod
-    def BDWRS():
-        return 0.035, 0.04, True
-
-    @staticmethod
-    def BUPL22():
-        return -0.035, -0.04, True
-
-    @staticmethod
-    def BUPL23():
-        return -0.035, -0.012, True
-
-    @staticmethod
-    def BUPL32():
-        return -0.02, -0.04, True
-
-    @staticmethod
-    def BUPL33():
-        return -0.03, -0.013, True
-
-    @staticmethod
-    def BUPLS():
-        return -0.035, -0.04, True
-
-    @staticmethod
-    def BUPR22():
-        return 0.035, -0.04, True
-
-    @staticmethod
-    def BUPR23():
-        return 0.035, -0.012, True
-
-    @staticmethod
-    def BUPR32():
-        return 0.02, -0.04, True
-
-    @staticmethod
-    def BUPR33():
-        return 0.03, -0.013, True
-
-    @staticmethod
-    def BUPRS():
-        return 0.035, -0.04, True
-
-    @staticmethod
-    def CDW():
-        return 0, 0.045, True
-
-    @staticmethod
-    def CENTER():
+    def c():
         qry = SqlQuery()
         qry.lab_stop()
         return 0, 0, False
 
     @staticmethod
-    def CL():
-        return -0.08, 0, True
+    def l0():
+        return 0.008, 0, True
 
     @staticmethod
-    def CR():
-        return 0.08, 0, True
+    def r0():
+        return -0.008, 0, True
 
     @staticmethod
-    def CUP():
-        return 0, -0.045, True
+    def u0():
+        return 0, -0.0045, True
 
-    @staticmethod
-    def ncup():
-        return 0, -0.02, True
+    # @staticmethod
+    # def ncup():
+    #     return 0, -0.02, True
 
-    @staticmethod
-    def ncr():
-        return 0.04, 0, True
+    # @staticmethod
+    # def ncr():
+    #     return 0.04, 0, True
 
-    @staticmethod
-    def ncl():
-        return -0.04, 0, True
+    # @staticmethod
+    # def ncl():
+    #     return -0.04, 0, True
 
-    @staticmethod
-    def ncdw():
-        return 0, 0.02, True
+    # @staticmethod
+    # def ncdw():
+    #     return 0, 0.02, True
 
     @staticmethod
     def default():
@@ -165,7 +165,7 @@ class CNNController:
         # instances
         self.bp = BackPropagation()
         self.qry = SqlQuery()
-        self.model = tf.keras.models.load_model("model_CNN.keras")
+        self.model = tf.keras.models.load_model("model_10um.keras")
         # C:\Users\grego\OneDrive - Universidad de Guadalajara\GitHub\SpatialF_controller\model_CNN.keras
 
     def predict(self):
@@ -173,6 +173,8 @@ class CNNController:
         switcher = WinnerMove()
         case = getattr(switcher, winner_class, switcher.default)
         X, Y, stop_h = case()
+        X = X
+        Y = Y
         self.qry.qy(X, Y)
         stop_h = self.qry.next_step()
         return stop_h
