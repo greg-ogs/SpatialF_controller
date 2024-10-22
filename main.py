@@ -255,6 +255,7 @@ if __name__ == "__main__":
     # Start CNN controller, a time independent controller
     CNNController = CNNController(None)
     while stop_handle:  # inverted boolean logic in this while condition
+        time_1 = time.time()
         exit_code = FLIR_instance.main()
 
         plt.imshow(FLIR_instance.image, cmap='gray')
@@ -272,6 +273,9 @@ if __name__ == "__main__":
         stop_handle = CNNController.predict()
 
     FLIR_instance.stop_recording()
+    time_2 = time.time()
+    ttime = time_2 - time_1
+    print(ttime)
     if exit_code:
         sys.exit(0)
     else:
